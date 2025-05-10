@@ -1,0 +1,236 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <limits>
+
+// ------------------------------------------
+// Data Structures
+// ------------------------------------------
+
+// Represents a product in the store
+struct Product {
+    int code;             // Unique product code/ID
+    std::string name;     // Product name (e.g., "T-shirt")
+    double price;         // Unit price
+    std::string size;     // Size label (e.g., "M")
+};
+
+// Represents an item in a user’s cart
+struct CartItem {
+    Product product;      // The product being purchased
+    int quantity;         // How many of this product
+};
+
+// Represents a registered user account
+struct User {
+    std::string username;       // Account username
+    std::string password;       // Account password
+    std::vector<CartItem> cart; // Shopping cart contents
+};
+
+// ------------------------------------------
+// Global Variables
+// ------------------------------------------
+
+// List of all registered users (in-memory)
+std::vector<User> users;
+
+// Hard-coded inventory of products (in-memory)
+std::vector<Product> inventory = {
+    {101, "T-shirt", 199.99, "S"},
+    {102, "T-shirt", 199.99, "M"},
+    {103, "T-shirt", 199.99, "L"},
+    {201, "Jeans",   499.99, "32"},
+    {202, "Jeans",   499.99, "34"},
+    {301, "Jacket",  899.99, "M"},
+    {302, "Jacket",  899.99, "L"}
+};
+
+// ------------------------------------------
+// Helper to clear input buffer
+// ------------------------------------------
+// After reading numbers with std::cin >>,
+// the newline remains—this ignores up to the next newline so getline() works.
+void clearCin() {
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+}
+
+// ------------------------------------------
+// User Registration & Login
+// ------------------------------------------
+
+User* registerUser() {
+    User newUser;
+    std::cout << "\n--- Register ---\n";
+    std::cout << "Choose username: ";
+    std::cin >> newUser.username;
+    std::cout << "Choose password: ";
+    std::cin >> newUser.password;
+    users.push_back(newUser);  // Add to global users list
+    std::cout << "Registration complete. You can now log in.\n";
+    return nullptr;
+}
+
+User* login() {
+    std::string uname, pwd;
+    std::cout << "\n--- Login ---\n";
+    std::cout << "Username: ";
+    std::cin >> uname;
+    std::cout << "Password: ";
+    std::cin >> pwd;
+
+    // Search for matching credentials
+    for (auto &u : users) {
+        if (u.username == uname && u.password == pwd) {
+            std::cout << "Login successful!\n";
+            return &u;  // Return pointer to logged-in user
+        }
+    }
+    std::cout << "Invalid credentials.\n";
+    return nullptr;
+}
+
+// ------------------------------------------
+// Inventory & Cart Operations
+// ------------------------------------------
+
+// Display all products in the inventory
+void showInventory() {
+    std::cout << "\n--- Inventory ---\n";
+    std::cout << "Code\tName\t\tPrice\tSize\n";
+    for (auto &p : inventory) {
+        std::cout
+            << p.code << "\t"
+            << p.name << "\t"
+            << p.price << "\t"
+            << p.size << "\n";
+    }
+}
+
+// Add a chosen product & quantity to the user’s cart
+void addToCart(User &user) {
+    int code, qty;
+    showInventory();
+    std::cout << "\nEnter product code to add: ";
+    std::cin >> code;
+    std::cout << "Quantity: ";
+    std::cin >> qty;
+
+    // Find the product by code
+    for (auto &p : inventory) {
+        if (p.code == code) {
+            user.cart.push_back({p, qty});
+            std::cout << qty << " x " << p.name << " added to cart.\n";
+            return;
+        }
+    }
+    std::cout << "Product not found.\n";
+}
+
+// Show current cart contents, line-by-line, with subtotals
+void viewCart(const User &user) {
+    if (user.cart.empty()) {
+        std::cout << "\nCart is empty.\n";
+        return;
+    }
+    double total = 0;
+    std::cout << "\n--- Your Cart ---\n";
+    std::cout << "Name\tQty\tPrice\tSubtotal\n";
+    for (auto &item : user.cart) {
+        double sub = item.quantity * item.product.price;
+        total += sub;
+        std::cout
+            << item.product.name << "\t"
+            << item.quantity << "\t"
+            << item.product.price << "\t"
+            << sub << "\n";
+    }
+    std::cout << "Total: R" << total << "\n";
+}
+
+// Finalize the order by getting an address and clearing the cart
+void checkout(User &user) {
+    if (user.cart.empty()) {
+        std::cout << "\nYour cart is empty. Add items before checkout.\n";
+        return;
+    }
+    viewCart(user);
+    clearCin();  // Prepare for getline
+    std::string address;
+    std::cout << "\nEnter delivery address: ";
+    std::getline(std::cin, address);
+
+    std::cout << "\nOrder placed!\nDelivering to: " << address << "\n";
+    user.cart.clear();  // Empty cart for next time
+}
+
+// ------------------------------------------
+// Logged-In User Menu
+// ------------------------------------------
+
+void userMenu(User &user) {
+    int choice;
+    do {
+        std::cout << "\n--- User Menu ---\n"
+                  << "1. Browse & add to cart\n"
+                  << "2. View cart\n"
+                  << "3. Checkout\n"
+                  << "4. Logout\n"
+                  << "Choice: ";
+        std::cin >> choice;
+
+        switch (choice) {
+            case 1:
+                addToCart(user);
+                break;
+            case 2:
+                viewCart(user);
+                break;
+            case 3:
+                checkout(user);
+                break;
+            case 4:
+                std::cout << "Logging out...\n";
+                break;
+            default:
+                std::cout << "Invalid choice.\n";
+        }
+    } while (choice != 4);
+}
+
+// ------------------------------------------
+// Program Entry Point
+// ------------------------------------------
+
+int main() {
+    int choice;
+    User* current = nullptr;
+
+    do {
+        std::cout << "\n=== Online Clothing System ===\n"
+                  << "1. Register\n"
+                  << "2. Login\n"
+                  << "3. Exit\n"
+                  << "Select: ";
+        std::cin >> choice;
+
+        switch (choice) {
+            case 1:
+                registerUser();
+                break;
+            case 2:
+                current = login();
+                if (current) {
+                    userMenu(*current);  // Enter the shopping menu
+                }
+                break;
+            case 3:
+                std::cout << "Goodbye!\n";
+                break;
+            default:
+                std::cout << "Invalid option.\n";
+        }
+    } while (choice != 3);
+
+    return 0;
+}
