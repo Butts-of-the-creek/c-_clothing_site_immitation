@@ -200,7 +200,7 @@ void checkout(User& user) {
     std::cout << "\nEnter delivery address: ";
     std::getline(std::cin, address);
 
-    std::cout << "\nOrder placed! Your items:\n viewCart(user) \n ...will be delivered to: " << address << "\n Come again!!";
+    std::cout << "\nOrder placed! Your items" <<"\n will be delivered to: " << address << "\n Come again!!";
     user.cart.clear();
 }
 
